@@ -22,27 +22,36 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="login-container">
-      <h2>Login</h2>
-      <form onSubmit={handleLogin}>
+    <div className="container d-flex justify-content-center align-items-center vh-100">
+  <div className="card p-4 shadow" style={{ maxWidth: "400px", width: "100%" }}>
+    <h2 className="text-center mb-4">Login</h2>
+    <form onSubmit={handleLogin}>
+      <div className="mb-3">
         <input
           type="email"
+          className="form-control"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
+      </div>
+      <div className="mb-3">
         <input
           type="password"
+          className="form-control"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <button type="submit">Log In</button>
-      </form>
-      {error && <p className="error-message">{error}</p>}
-    </div>
+      </div>
+      <button type="submit" className="btn btn-primary w-100">Log In</button>
+    </form>
+    {error && <p className="text-danger text-center mt-3">{error}</p>}
+  </div>
+</div>
+
   );
 };
 
