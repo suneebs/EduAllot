@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import ReleaseApplication from "./ReleaseApplication";
+import Submissions from "./Submissions";
+import GiveAllotments from "./GiveAllotments";
 
 function AdminDashboard() {
   const [activeComponent, setActiveComponent] = useState("dashboard");
@@ -15,11 +17,19 @@ function AdminDashboard() {
         <button className="btn btn-secondary" onClick={() => setActiveComponent("dashboard")}>
           Home
         </button>
+        <button className="btn btn-secondary" onClick={() => setActiveComponent("submissions")}>
+        Submissions
+        </button>
+        <button className="btn btn-secondary" onClick={() => setActiveComponent("allotments")}>
+        Allotments
+        </button>
       </div>
 
       {/* Dynamic Component Rendering */}
       <div className="card p-4 shadow">
         {activeComponent === "createForm" && <ReleaseApplication />}
+        {activeComponent === "submissions" && <Submissions />}
+        {activeComponent === "allotments" && <GiveAllotments />}
         {activeComponent === "dashboard" && <h4>Welcome to the Admin Dashboard</h4>}
       </div>
     </div>

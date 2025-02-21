@@ -1,82 +1,98 @@
 import React, { useState, useEffect } from "react";
-import { db } from "../../utils/firebase"; // Ensure Firebase is configured
-import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
-import { format } from "date-fns";
-
-
+import { db } from "../../utils/firebase";
+import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "firebase/firestore";
+import * as XLSX from "xlsx";
+import LoadingSpinner from "../Shared/LoadingSpinner";
 
 function ReleaseApplication() {
+    const [form, setForm] = useState(null);
     const [formTitle, setFormTitle] = useState("");
-    const [fields, setFields] = useState({ name: false, email: false, phone: false, address: false });
+    const [description, setDescription] = useState("");
     const [endDate, setEndDate] = useState("");
 
-    const handleFieldChange = (e) => {
-        setFields({ ...fields, [e.target.name]: e.target.checked });
+    useEffect(() => {
+        fetchForm();
+    }, []);
+
+    const fetchForm = async () => {
+        try {
+            const querySnapshot = await getDocs(collection(db, "forms"));
+            const formList = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+            setForm(formList.length > 0 ? formList[0] : null);
+        } catch (error) {
+            console.error("Error fetching form:", error);
+        }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await addDoc(collection(db, "forms"), {
-                formTitle,
-                fields,
-                endDate: new Date(endDate),
-                createdAt: new Date(),
-            });
+            await addDoc(collection(db, "forms"), { formTitle, description, endDate, createdAt: new Date() });
             alert("Form Created Successfully!");
-            setFormTitle("");
-            setFields({ name: false, email: false, phone: false, address: false });
-            setEndDate("");
+            fetchForm();
         } catch (error) {
             console.error("Error creating form: ", error);
         }
     };
-  return (
-    <div className="container mt-5">
-            <div className="card p-4 shadow">
-                <h2 className="mb-4">Create New Application Form</h2>
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-3">
-                        <input
-                            type="text"
-                            className="form-control"
-                            placeholder="Form Title"
-                            value={formTitle}
-                            onChange={(e) => setFormTitle(e.target.value)}
-                            required
-                        />
+
+    const handleDelete = async () => {
+        if (window.confirm("Are you sure you want to delete this form?")) {
+            try {
+                await deleteDoc(doc(db, "forms", form.id));
+                alert("Form Deleted Successfully!");
+                setForm(null);
+            } catch (error) {
+                console.error("Error deleting form: ", error);
+            }
+        }
+    };
+
+    const handleExtendDate = async () => {
+        const newDate = prompt("Enter new last date (YYYY-MM-DD):");
+        if (newDate) {
+            try {
+                await updateDoc(doc(db, "forms", form.id), { endDate: newDate });
+                alert("Date Extended Successfully!");
+                fetchForm();
+            } catch (error) {
+                console.error("Error updating date: ", error);
+            }
+        }
+    };
+
+
+    return (
+        <div className="container mt-5">
+            {form ? (
+                <div className="card p-4 shadow">
+                    <h2>{form.formTitle}</h2>
+                    <p>{form.description}</p>
+                    <small>
+    Last Date: {form.endDate}
+</small>
+
+                    <div className="mt-3">
+                        <button className="btn btn-warning me-2" onClick={handleExtendDate}>
+                            Extend Date
+                        </button>
+                        <button className="btn btn-danger" onClick={handleDelete}>
+                            Delete
+                        </button>
                     </div>
-                    <div className="mb-3">
-                        <h5>Select Fields to Collect</h5>
-                        {Object.keys(fields).map((field) => (
-                            <div className="form-check" key={field}>
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    name={field}
-                                    checked={fields[field]}
-                                    onChange={handleFieldChange}
-                                />
-                                <label className="form-check-label">
-                                    {field.charAt(0).toUpperCase() + field.slice(1)}
-                                </label>
-                            </div>
-                        ))}
-                    </div>
-                    <div className="mb-3">
-                        <input
-                            type="date"
-                            className="form-control"
-                            value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <button type="submit" className="btn btn-primary">Create Form</button>
-                </form>
-            </div>
+                </div>
+            ) : (
+                <div className="card p-4 shadow">
+                    <h2>Create New Application Form</h2>
+                    <form onSubmit={handleSubmit}>
+                        <input type="text" className="form-control mb-3" placeholder="Form Title" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} required />
+                        <textarea className="form-control mb-3" placeholder="Form Description" value={description} onChange={(e) => setDescription(e.target.value)} required />
+                        <input type="date" className="form-control mb-3" value={endDate} onChange={(e) => setEndDate(e.target.value)} required />
+                        <button type="submit" className="btn btn-primary">Create Form</button>
+                    </form>
+                </div>
+            )}
         </div>
-  )
+    );
 }
 
-export default ReleaseApplication
+export default ReleaseApplication;

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import FormListing from "./FormListing";
-import Submissions from "./Submissions";
+
 
 function User() {
   const [activeComponent, setActiveComponent] = useState("user");
@@ -16,9 +16,7 @@ function User() {
         <button className="btn btn-secondary" onClick={() => setActiveComponent("user")}>
           Home
         </button>
-        <button className="btn btn-secondary" onClick={() => setActiveComponent("submissions")}>
-        Submissions
-        </button>
+       
         <button className="btn btn-secondary"> <a href="/">Back</a>
         
         </button>
@@ -27,7 +25,6 @@ function User() {
       {/* Dynamic Component Rendering */}
       <div className="card p-4 shadow">
         {activeComponent === "listform" && <FormListing />}
-        {activeComponent === "submissions" && <Submissions />}
         {activeComponent === "user" && 
         <>
         <h3>Welcome to UserPage</h3>
