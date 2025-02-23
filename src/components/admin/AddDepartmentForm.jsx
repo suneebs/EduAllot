@@ -4,160 +4,215 @@ import { doc, setDoc, getDocs, collection } from "firebase/firestore";
 
 function AddDepartmentForm() {
   const [departments, setDepartments] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // Fetch department data from Firebase
   useEffect(() => {
     fetchDepartments();
   }, []);
 
-    const fetchDepartments = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, "departments"));
-        const deptData = querySnapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            name: doc.id,
-            totalSeats: data.totalSeats || 0,
-            general: data.general || 0,
-            reserved: {
-              Sc: data.reserved?.Sc || 0,
-              St: data.reserved?.St || 0,
-              OEC: data.reserved?.OEC || 0,
-            },
-          };
-        });
-        setDepartments(deptData);
-      } catch (error) {
-        console.error("Error fetching departments: ", error);
-      }
-    };
+  const fetchDepartments = async () => {
+    try {
+      setLoading(true);
+      const querySnapshot = await getDocs(collection(db, "departments"));
+      const deptData = querySnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          name: doc.id,
+          totalSeats: data.totalSeats || 0,
+          // Initialize seat counts
+          seatCounts: {
+            general: data.seatCounts?.general || 0,
+            sc: data.seatCounts?.sc || 0,
+            st: data.seatCounts?.st || 0,
+            oec: data.seatCounts?.oec || 0
+          },
+          // Preserve existing allocations arrays but don't display them
+          general: data.general || [],
+          reserved: data.reserved || {
+            SC: [],
+            ST: [],
+            OEC: []
+          }
+        };
+      });
+      setDepartments(deptData);
+    } catch (error) {
+      console.error("Error fetching departments: ", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-
-  // Handle input changes
   const handleChange = (index, field, value) => {
     const updatedDepartments = departments.map((dept, i) => {
       if (i === index) {
-        if (field.includes("reserved")) {
-          const [_, nestedField] = field.split(".");
+        const numValue = parseInt(value) || 0;
+        
+        if (field.startsWith('seatCounts.')) {
+          const category = field.split('.')[1];
           return {
             ...dept,
-            reserved: {
-              ...dept.reserved,
-              [nestedField]: Number(value),
-            },
+            seatCounts: {
+              ...dept.seatCounts,
+              [category]: numValue
+            }
           };
         }
-        return { ...dept, [field]: Number(value) };
+        return { ...dept, [field]: numValue };
       }
       return dept;
     });
-
     setDepartments(updatedDepartments);
   };
 
-  // Save updated data to Firebase
+  const calculateTotalSeats = (dept) => {
+    return Object.values(dept.seatCounts).reduce((sum, count) => sum + count, 0);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    
     try {
       for (const dept of departments) {
-        await setDoc(doc(db, "departments", dept.name), {
-          totalSeats: dept.general+dept.reserved.Sc+dept.reserved.St+dept.reserved.OEC,
-          general: dept.general,
-          reserved: {
-            Sc: dept.reserved.Sc,
-            St: dept.reserved.St,
-            OEC: dept.reserved.OEC,
+        const totalSeats = calculateTotalSeats(dept);
+        
+        // Prepare the document data
+        const deptData = {
+          totalSeats,
+          // Store seat counts separately
+          seatCounts: {
+            general: dept.seatCounts.general,
+            sc: dept.seatCounts.sc,
+            st: dept.seatCounts.st,
+            oec: dept.seatCounts.oec
           },
-        });
+          // Preserve existing allocations
+          general: dept.general || [],
+          reserved: dept.reserved || {
+            SC: [],
+            ST: [],
+            OEC: []
+          },
+          // Add quota fields for allotment system
+          SC: dept.seatCounts.sc,
+          ST: dept.seatCounts.st,
+          OEC: dept.seatCounts.oec
+        };
+
+        await setDoc(doc(db, "departments", dept.name), deptData);
       }
       alert("Departments updated successfully!");
+      await fetchDepartments();
     } catch (error) {
       console.error("Error updating departments: ", error);
+      alert("Error updating departments. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    fetchDepartments();
   };
+
+  if (loading) {
+    return <div className="container">Loading...</div>;
+  }
 
   return (
     <div className="container">
-      <h2>Department Seat Details</h2>
+      <h2 className="mb-4">Department Seat Configuration</h2>
 
-      {/* Department details table */}
-      <table className="table table-bordered">
-        <thead>
-          <tr>
-            <th>Department</th>
-            <th>Total Seats</th>
-            <th>General</th>
-            <th>SC Reserved</th>
-            <th>ST Reserved</th>
-            <th>OEC Reserved</th>
-          </tr>
-        </thead>
-        <tbody>
-          {departments.map((dept) => (
-            <tr key={dept.id}>
-              <td>{dept.name}</td>
-              <td>{dept.totalSeats}</td>
-              <td>{dept.general}</td>
-              <td>{dept.reserved.Sc}</td>
-              <td>{dept.reserved.St}</td>
-              <td>{dept.reserved.OEC}</td>
+      {/* View-only table */}
+      <div className="table-responsive mb-5">
+        <table className="table table-bordered">
+          <thead className="table-light">
+            <tr>
+              <th>Department</th>
+              <th>Total Seats</th>
+              <th>General</th>
+              <th>SC Reserved</th>
+              <th>ST Reserved</th>
+              <th>OEC Reserved</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {departments.map((dept) => (
+              <tr key={dept.id}>
+                <td>{dept.name}</td>
+                <td>{calculateTotalSeats(dept)}</td>
+                <td>{dept.seatCounts.general}</td>
+                <td>{dept.seatCounts.sc}</td>
+                <td>{dept.seatCounts.st}</td>
+                <td>{dept.seatCounts.oec}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-      <h2>Update Department Details</h2>
+      <h3 className="mb-4">Update Seat Counts</h3>
       <form onSubmit={handleSubmit}>
         {departments.map((dept, index) => (
-          <div key={index} className="card p-3 mb-3">
-            <h3>{dept.name} Department</h3>
-
-            <label>Total Seats:</label>
-            <input
-              type="number"
-              value={dept.totalSeats}
-              onChange={(e) => handleChange(index, "totalSeats", e.target.value)}
-            />
-
-            <label>General Seats:</label>
-            <input
-              type="number"
-              value={dept.general}
-              onChange={(e) => handleChange(index, "general", e.target.value)}
-            />
-
-            <label>SC Reserved Seats:</label>
-            <input
-              type="number"
-              value={dept.reserved.Sc}
-              onChange={(e) =>
-                handleChange(index, "reserved.Sc", e.target.value)
-              }
-            />
-
-            <label>ST Reserved Seats:</label>
-            <input
-              type="number"
-              value={dept.reserved.St}
-              onChange={(e) =>
-                handleChange(index, "reserved.St", e.target.value)
-              }
-            />
-
-            <label>OEC Reserved Seats:</label>
-            <input
-              type="number"
-              value={dept.reserved.OEC}
-              onChange={(e) =>
-                handleChange(index, "reserved.OEC", e.target.value)
-              }
-            />
+          <div key={index} className="card mb-4">
+            <div className="card-header">
+              <h4 className="mb-0">{dept.name} Department</h4>
+            </div>
+            <div className="card-body">
+              <div className="row g-3">
+                <div className="col-md-6">
+                  <label className="form-label">General Seats:</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    min="0"
+                    value={dept.seatCounts.general}
+                    onChange={(e) => handleChange(index, "seatCounts.general", e.target.value)}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">SC Reserved Seats:</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    min="0"
+                    value={dept.seatCounts.sc}
+                    onChange={(e) => handleChange(index, "seatCounts.sc", e.target.value)}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">ST Reserved Seats:</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    min="0"
+                    value={dept.seatCounts.st}
+                    onChange={(e) => handleChange(index, "seatCounts.st", e.target.value)}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">OEC Reserved Seats:</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    min="0"
+                    value={dept.seatCounts.oec}
+                    onChange={(e) => handleChange(index, "seatCounts.oec", e.target.value)}
+                  />
+                </div>
+                <div className="col-12">
+                  <p className="text-info">
+                    Total Seats: {calculateTotalSeats(dept)}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         ))}
-        <button type="submit" className="btn btn-primary">
-          Save Departments
+        <button 
+          type="submit" 
+          className="btn btn-primary"
+          disabled={loading}
+        >
+          {loading ? "Saving..." : "Save Changes"}
         </button>
       </form>
     </div>

@@ -22,13 +22,21 @@ function FormListing() {
         distance: "",
         priorityChoices: { 1: "", 2: "", 3: "" },
     };
+    const formatDate = (date) => {
+        const d = new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
 
     const [formData, setFormData] = useState(initialFormData);
 
     useEffect(() => {
         const fetchForms = async () => {
             try {
-                const today = new Date();
+                const d = new Date();
+                const today = formatDate(d);
                 const q = query(collection(db, "forms"), where("endDate", ">=", today));
                 const querySnapshot = await getDocs(q);
 
@@ -101,7 +109,7 @@ function FormListing() {
                             <p>{form.description}</p>
                             <p className="text-muted">
                                 End Date:{" "}
-                                {form.endDate?.toDate ? format(form.endDate.toDate(), "yyyy-MM-dd") : "Invalid Date"}
+                                {form.endDate}
                             </p>
                             <button className="btn btn-success" onClick={() => setSelectedForm(form)}>
                                 Fill Form

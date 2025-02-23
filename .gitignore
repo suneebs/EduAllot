@@ -30,4 +30,4 @@ dist-ssr
 .env.development
 .env.production
 
-src/components/admin/GiveAllotments.jsx
+testing/serviceAccountKey.json

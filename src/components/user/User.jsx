@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import FormListing from "./FormListing";
+import AllotmentList from "./AllotmentList";
 
 
 function User() {
@@ -16,6 +17,9 @@ function User() {
         <button className="btn btn-secondary" onClick={() => setActiveComponent("user")}>
           Home
         </button>
+        <button className="btn btn-secondary" onClick={() => setActiveComponent("allotmentlist")}>
+          Allotment
+        </button>
        
         <button className="btn btn-secondary"> <a href="/">Back</a>
         
@@ -25,6 +29,7 @@ function User() {
       {/* Dynamic Component Rendering */}
       <div className="card p-4 shadow">
         {activeComponent === "listform" && <FormListing />}
+        {activeComponent === "allotmentlist" && <AllotmentList />}
         {activeComponent === "user" && 
         <>
         <h3>Welcome to UserPage</h3>
