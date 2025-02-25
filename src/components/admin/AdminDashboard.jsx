@@ -1,19 +1,20 @@
 import React, {useState, useEffect} from 'react';
-import "./Home.css";
+import "./AdminDashboard.css";
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import { db } from "../utils/firebase";
+import { db } from "../../utils/firebase";
 import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
-import logo from "../assets/logonobg.png";
-import LoadingSpinner from '../components/Shared/LoadingSpinner';
-import ApplicationForms from '../components/user/ApplicationForms';
+import logo from "../../assets/logonobg.png";
+import LoadingSpinner from '../../components/Shared/LoadingSpinner';
+import ApplicationForms from '../../components/user/ApplicationForms';
+import AdminUpdates from './AdminUpdates';
 
 
-function Home({ comp }) {
+function AdminDashboard() {
     const [isActive, setIsActive] = useState(false);
     const [updates, setUpdates] = useState([]);
     const [loading, setLoading] = useState(true);
     
-    const [activeComponent, setActiveComponent] = useState(comp || 'home');
+    const [activeComponent, setActiveComponent] = useState('update');
   const toggleSidebar = () => {
     setIsActive(!isActive);
   };
@@ -42,33 +43,32 @@ function Home({ comp }) {
       <nav id="sidebar" className={isActive ? 'active' : ''}>
         <div className="sidebar-header d-flex  align-items-center "  onClick={() => setActiveComponent("home")}>
             <img src={ logo } alt="" width={50} height={50} className='me-2' />
-            <h3 className='p-1'>EduAllot</h3>
+            <h4 className='p-1'>EduAllot Admin </h4>
 
      
         </div>
         <ul className="list-unstyled components">
-          <p  onClick={() => setActiveComponent("home")}>Updates</p>
+          <p  onClick={() => setActiveComponent("update")}>Add Updates</p>
           <li className="active">
-            <a  className="dropdown-toggle" onClick={() => setActiveComponent("apply")}>Apply Online</a>
+            <a  className="dropdown-toggle" onClick={() => setActiveComponent("apply")}>Release Form/Application</a>
             
            
           </li>
-          
+          <li><a href="#">Edit Seats</a></li>
+          <li><a href="#">Download Submissions</a></li>
           <li>
-            <a href="#pageSubmenu" data-bs-toggle="collapse" aria-expanded="false" className="dropdown-toggle">Allotment</a>
+            <a href="#pageSubmenu" data-bs-toggle="collapse" aria-expanded="false" className="dropdown-toggle">Allotments</a>
             <ul className="collapse list-unstyled" id="pageSubmenu">
               <li><a href="#">Electrical Engineering</a></li>
               <li><a href="#">Mechanical Engineering</a></li>
               <li><a href="#">Electronic Engineering</a></li>
             </ul>
           </li>
-          <li><a href="#">Help</a></li>
+          
           
         </ul>
         <div className="sidebar-footer" >
-    <a href="/admincet">
-    <i className="fas fa-cog me-2"></i> 
-    </a>
+    
     
   </div>
       </nav>
@@ -82,7 +82,7 @@ function Home({ comp }) {
             <div className="ms-auto">
   <ul className="navbar-nav d-flex flex-row">
     <li className="nav-item me-3">
-      <a className="nav-link" onClick={() => setActiveComponent("apply")}>ApplyOnline</a>
+      <a className="nav-link" onClick={() => setActiveComponent("apply")}>Submissions</a>
     </li>
     <li className="nav-item me-3">
       <a className="nav-link" href="#allotment">Allotment</a>
@@ -97,26 +97,7 @@ function Home({ comp }) {
           </div>
         </nav>
         {activeComponent === "apply" && <ApplicationForms />}
-        {activeComponent === "home" && 
-        <>
-        <h3>Updates</h3>
-        {loading ? (
-          <LoadingSpinner />
-        ) : (
-          updates.map(update => (
-            <div key={update.id} className={`card mb-3 mt-4 ${update.important ? 'border-danger' : 'border-light'}`} style={{ backgroundColor: update.important ? '#f8d7da' : '#f8f9fa' }}>
-              <div className="card-header">{update.title}</div>
-              <div className="card-body">
-                <h5 className="card-title">{update.description}</h5>
-                {update.important && <span className="badge bg-danger">{update.important}</span>}
-              </div>
-            </div>
-          ))
-        )}
-        <p>Welcome to your personalized dashboard. Here you can find quick links and statistics.</p>
-        </>
-        
-        }
+        {activeComponent === "update" && <AdminUpdates/> }
         
         
         
@@ -126,4 +107,4 @@ function Home({ comp }) {
   )
 }
 
-export default Home
+export default AdminDashboard

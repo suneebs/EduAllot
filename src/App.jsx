@@ -4,6 +4,9 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import NotFound from "./pages/NotFound"; 
 import LoadingSpinner from "./components/Shared/LoadingSpinner";
+import AdminLogin from './components/admin/AdminLogin';
+import SecureAuthRoutes from './utils/SecureAuthRoutes';
+import AdminDashboard from './components/admin/AdminDashboard';
 
 
 
@@ -23,14 +26,14 @@ function App() {
 
 
                     {/* Public Routes */}
-                    {/* <Route path="/home" element={<User />} />
+                    
                     <Route path="/admincet" element={<AdminLogin />} />
-                     */}
+                    
 
                     {/* Protected Routes (Admin) */}
-                    {/* <Route element={<SecureAuthRoutes />}>
+                    <Route element={<SecureAuthRoutes />}>
                     <Route path="/admindashboard" element={<AdminDashboard />} />
-                    </Route> */}
+                    </Route>
 
                     {/* Not Found Route */}
                     <Route path="*" element={<NotFound />} />
