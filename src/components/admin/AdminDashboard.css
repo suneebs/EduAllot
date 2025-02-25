@@ -25,13 +25,6 @@ a:focus {
     transition: all 0.3s;
 }
 
-.btn {
-    background-color: #7387d59b;
-}
-.btn:hover {
-    background-color: #7387d598;
-}
-
 .navbar {
     padding: 15px 10px;
     background: #fff;

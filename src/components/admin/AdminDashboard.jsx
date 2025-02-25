@@ -5,9 +5,9 @@ import { db } from "../../utils/firebase";
 import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
 import logo from "../../assets/logonobg.png";
 import LoadingSpinner from '../../components/Shared/LoadingSpinner';
-import ApplicationForms from '../../components/user/ApplicationForms';
 import AdminUpdates from './AdminUpdates';
-
+import ApplicationForm from './ApplicationForm';
+import ListApplications from './ListApplications';
 
 function AdminDashboard() {
     const [isActive, setIsActive] = useState(false);
@@ -55,7 +55,7 @@ function AdminDashboard() {
            
           </li>
           <li><a href="#">Edit Seats</a></li>
-          <li><a href="#">Download Submissions</a></li>
+          <li><a onClick={() => setActiveComponent("list")}>Download Submissions</a></li>
           <li>
             <a href="#pageSubmenu" data-bs-toggle="collapse" aria-expanded="false" className="dropdown-toggle">Allotments</a>
             <ul className="collapse list-unstyled" id="pageSubmenu">
@@ -82,7 +82,7 @@ function AdminDashboard() {
             <div className="ms-auto">
   <ul className="navbar-nav d-flex flex-row">
     <li className="nav-item me-3">
-      <a className="nav-link" onClick={() => setActiveComponent("apply")}>Submissions</a>
+      <a className="nav-link" onClick={() => setActiveComponent("list")}>Submissions</a>
     </li>
     <li className="nav-item me-3">
       <a className="nav-link" href="#allotment">Allotment</a>
@@ -96,8 +96,9 @@ function AdminDashboard() {
 
           </div>
         </nav>
-        {activeComponent === "apply" && <ApplicationForms />}
+        {activeComponent === "apply" && <ApplicationForm />}
         {activeComponent === "update" && <AdminUpdates/> }
+        {activeComponent === "list" && <ListApplications/> }
         
         
         
