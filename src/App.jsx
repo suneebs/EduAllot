@@ -1,18 +1,42 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import ExcelUploader from './components/viewDetails'
+import React, { Suspense, useState }  from 'react'
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min';
+import NotFound from "./pages/NotFound"; 
+import LoadingSpinner from "./components/Shared/LoadingSpinner";
+
+
+
+const Home = React.lazy(() => import("./pages/Home"));
 
 function App() {
-
+  
   return (
-    <>
-      <header className="App-header">
-        <h1 className="App-title">Student allotment details</h1>
-      </header>
-      <ExcelUploader />
-    </>
+    <Router>
+            <Suspense fallback={<LoadingSpinner />}>
+                <Routes>
+                    
+                    <Route path="/" element={<Home />} />
+                    <Route path="/apply" element={<Home comp="apply" />} />
+
+
+
+
+                    {/* Public Routes */}
+                    {/* <Route path="/home" element={<User />} />
+                    <Route path="/admincet" element={<AdminLogin />} />
+                     */}
+
+                    {/* Protected Routes (Admin) */}
+                    {/* <Route element={<SecureAuthRoutes />}>
+                    <Route path="/admindashboard" element={<AdminDashboard />} />
+                    </Route> */}
+
+                    {/* Not Found Route */}
+                    <Route path="*" element={<NotFound />} />
+                </Routes>
+            </Suspense>
+        </Router>
   )
 }
 
