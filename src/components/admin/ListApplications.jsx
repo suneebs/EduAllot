@@ -60,7 +60,7 @@ function ListApplications() {
         XLSX.writeFile(workbook, "submissions.xlsx");
     };
   return (
-    <div className="container m-0 p-0">
+    <div className="card m-0 p-0">
             <div className="card p-4 shadow">
                 <h2 className="mb-4">Form Submissions</h2>
 

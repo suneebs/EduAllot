@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import "./AdminDashboard.css";
+import '../../pages/Home.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { db } from "../../utils/firebase";
 import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
@@ -8,6 +8,7 @@ import LoadingSpinner from '../../components/Shared/LoadingSpinner';
 import AdminUpdates from './AdminUpdates';
 import ApplicationForm from './ApplicationForm';
 import ListApplications from './ListApplications';
+import EditDepartment from './EditDepartment';
 
 function AdminDashboard() {
     const [isActive, setIsActive] = useState(false);
@@ -54,7 +55,7 @@ function AdminDashboard() {
             
            
           </li>
-          <li><a href="#">Edit Seats</a></li>
+          <li><a  onClick={() => setActiveComponent("editdep")}>Edit Seats</a></li>
           <li><a onClick={() => setActiveComponent("list")}>Download Submissions</a></li>
           <li>
             <a href="#pageSubmenu" data-bs-toggle="collapse" aria-expanded="false" className="dropdown-toggle">Allotments</a>
@@ -99,6 +100,7 @@ function AdminDashboard() {
         {activeComponent === "apply" && <ApplicationForm />}
         {activeComponent === "update" && <AdminUpdates/> }
         {activeComponent === "list" && <ListApplications/> }
+        {activeComponent === "editdep" && <EditDepartment/> }
         
         
         

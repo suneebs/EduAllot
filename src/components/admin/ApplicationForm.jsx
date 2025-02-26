@@ -102,7 +102,7 @@ function ApplicationForm() {
     };
 
     return (
-        <div className="container mt-5">
+        <div className="card mt-5">
             {form ? (
                 <div className="card p-4 shadow">
                     <h2>{form.formTitle}</h2>

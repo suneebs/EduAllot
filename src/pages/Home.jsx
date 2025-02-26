@@ -6,6 +6,7 @@ import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
 import logo from "../assets/logonobg.png";
 import LoadingSpinner from '../components/Shared/LoadingSpinner';
 import ApplicationForms from '../components/user/ApplicationForms';
+import Help from '../components/user/Help'
 
 
 function Home({ comp }) {
@@ -62,7 +63,7 @@ function Home({ comp }) {
               <li><a href="#">Electronic Engineering</a></li>
             </ul>
           </li>
-          <li><a href="#">Help</a></li>
+          <li><a onClick={() => setActiveComponent("help")}>Help</a></li>
           
         </ul>
         <div className="sidebar-footer" >
@@ -88,7 +89,7 @@ function Home({ comp }) {
       <a className="nav-link" href="#allotment">Allotment</a>
     </li>
     <li className="nav-item me-1">
-      <a className="nav-link" href="#help">Help</a>
+      <a className="nav-link" onClick={() => setActiveComponent("help")}>Help</a>
     </li>
   </ul>
   
@@ -97,6 +98,7 @@ function Home({ comp }) {
           </div>
         </nav>
         {activeComponent === "apply" && <ApplicationForms />}
+        {activeComponent === "help" && <Help />}
         {activeComponent === "home" && 
         <>
         <h3>Updates</h3>
