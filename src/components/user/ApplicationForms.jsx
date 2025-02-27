@@ -111,7 +111,7 @@ function ApplicationForms() {
     };
 
     return (
-        <div className="container mt-5">
+        <div className="card mt-5">
         {!selectedForm && (
 
            

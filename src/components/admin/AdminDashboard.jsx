@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react';
 import '../../pages/Home.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { db } from "../../utils/firebase";
+import { getAuth, signOut } from "firebase/auth";
 import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
 import logo from "../../assets/logonobg.png";
 import LoadingSpinner from '../../components/Shared/LoadingSpinner';
@@ -9,6 +10,7 @@ import AdminUpdates from './AdminUpdates';
 import ApplicationForm from './ApplicationForm';
 import ListApplications from './ListApplications';
 import EditDepartment from './EditDepartment';
+import PublishAllotment from './PublishAllotment';
 
 function AdminDashboard() {
     const [isActive, setIsActive] = useState(false);
@@ -19,6 +21,22 @@ function AdminDashboard() {
   const toggleSidebar = () => {
     setIsActive(!isActive);
   };
+  const handleLogout = async () => {
+    const auth = getAuth();
+    try {
+      if(confirm("Do you Want to Log Out")){
+        await signOut(auth);
+        window.location.href = '/'; // Redirect to login page or homepage
+      }
+      else{
+        return;
+      }
+      
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+  
   
   useEffect(() => {
     const fetchUpdates = async () => {
@@ -57,14 +75,20 @@ function AdminDashboard() {
           </li>
           <li><a  onClick={() => setActiveComponent("editdep")}>Edit Seats</a></li>
           <li><a onClick={() => setActiveComponent("list")}>Download Submissions</a></li>
-          <li>
-            <a href="#pageSubmenu" data-bs-toggle="collapse" aria-expanded="false" className="dropdown-toggle">Allotments</a>
+           <li>
+            <a href="#pageSubmenu" data-bs-toggle="collapse" aria-expanded="false" className="dropdown-toggle"  onClick={() => setActiveComponent("allot")}>Allotment</a>
             <ul className="collapse list-unstyled" id="pageSubmenu">
               <li><a href="#">Electrical Engineering</a></li>
               <li><a href="#">Mechanical Engineering</a></li>
               <li><a href="#">Electronic Engineering</a></li>
             </ul>
           </li>
+          <li className="nav-item me-1">
+  <a className="nav-link text-danger" onClick={handleLogout} style={{ cursor: 'pointer' }}>
+    Logout
+  </a>
+</li>
+
           
           
         </ul>
@@ -86,7 +110,7 @@ function AdminDashboard() {
       <a className="nav-link" onClick={() => setActiveComponent("list")}>Submissions</a>
     </li>
     <li className="nav-item me-3">
-      <a className="nav-link" href="#allotment">Allotment</a>
+      <a className="nav-link" onClick={() => setActiveComponent("allot")}>Allotment</a>
     </li>
     <li className="nav-item me-1">
       <a className="nav-link" href="#help">Help</a>
@@ -100,6 +124,7 @@ function AdminDashboard() {
         {activeComponent === "apply" && <ApplicationForm />}
         {activeComponent === "update" && <AdminUpdates/> }
         {activeComponent === "list" && <ListApplications/> }
+        {activeComponent === "allot" && <PublishAllotment/> }
         {activeComponent === "editdep" && <EditDepartment/> }
         
         

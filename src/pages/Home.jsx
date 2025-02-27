@@ -67,7 +67,7 @@ function Home({ comp }) {
           
         </ul>
         <div className="sidebar-footer" >
-    <a href="/admincet">
+    <a href="/admindashboard">
     <i className="fas fa-cog me-2"></i> 
     </a>
     

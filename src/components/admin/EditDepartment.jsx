@@ -133,6 +133,7 @@ function AddDepartments() {
     try {
       for (const dept of departments) {
         const deptData = {
+          name: dept.name,
           capacity: dept.capacity,
           reserved: dept.reserved,
           allocatedSeats: dept.allocatedSeats
