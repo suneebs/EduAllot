@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    
+    <script>
+        const students = [
+  { name: "Arjun", age: 20, distance: 5, caste: "OEC", priority: ["EC", "MECH", "EE"] },
+  { name: "Meera", age: 22, distance: 3, caste: "Sc", priority: ["EE", "EC", "MECH"] },
+  { name: "Ravi", age: 21, distance: 7, caste: "St", priority: ["MECH", "EC", "EE"] },
+  { name: "Anu", age: 23, distance: 2, caste: "General", priority: ["EC", "EE", "MECH"] },
+  { name: "Kiran", age: 19, distance: 4, caste: "General", priority: ["EC", "MECH", "EE"] },
+  { name: "Sita", age: 20, distance: 6, caste: "OEC", priority: ["MECH", "EE", "EC"] },
+  { name: "Hari", age: 22, distance: 8, caste: "General", priority: ["EC", "MECH", "EE"] },
+  { name: "Nila", age: 20, distance: 9, caste: "Sc", priority: ["MECH", "EC", "EE"] },
+  { name: "Balu", age: 21, distance: 1, caste: "St", priority: ["EE", "EC", "MECH"] },
+  { name: "Dev", age: 22, distance: 3, caste: "General", priority: ["EC", "MECH", "EE"] },
+];
+
+const departments = {
+  EC: { general: [], reserved: { Sc: null, St: null, OEC: null }, capacity: 15 },
+  EE: { general: [], reserved: { Sc: null, St: null, OEC: null }, capacity: 15 },
+  MECH: { general: [], reserved: { Sc: null, St: null, OEC: null }, capacity: 15 },
+};
+
+const reservedCategories = ["Sc", "St", "OEC"];
+
+// Sort students by distance (ascending)
+students.sort((a, b) => a.distance - b.distance);
+
+// Allot general seats first (up to 12 seats per department)
+students.forEach((student) => {
+  for (const dept of student.priority) {
+    const department = departments[dept];
+    if (department.general.length < 12) {
+      department.general.push(student);
+      break;
+    }
+  }
+});
+
+// Allot reserved seats if not already in general quota
+students.forEach((student) => {
+  for (const dept of student.priority) {
+    const department = departments[dept];
+    if (
+      reservedCategories.includes(student.caste) &&
+      !department.general.includes(student) &&
+      department.reserved[student.caste] === null
+    ) {
+      department.reserved[student.caste] = student;
+      break;
+    }
+  }
+});
+
+// Fill unclaimed reserved seats with general category
+Object.keys(departments).forEach((dept) => {
+  const department = departments[dept];
+  reservedCategories.forEach((caste) => {
+    if (department.reserved[caste] === null) {
+      const nextGeneral = students.find(
+        (student) =>
+          !department.general.includes(student) &&
+          !Object.values(department.reserved).includes(student)
+      );
+      if (nextGeneral) {
+        department.reserved[caste] = nextGeneral;
+      }
+    }
+  });
+});
+
+// Display results
+Object.keys(departments).forEach((dept) => {
+  console.log(`\n${dept} Department Allotment:`);
+
+  console.log("\nGeneral Quota:");
+  departments[dept].general.forEach((s, i) => {
+    console.log(`${i + 1}. ${s.name} (${s.caste}, ${s.distance} km)`);
+  });
+
+  console.log("\nReserved Quota:");
+  reservedCategories.forEach((caste) => {
+    const student = departments[dept].reserved[caste];
+    console.log(`${caste}: ${student ? student.name : "Vacant"}`);
+  });
+});
+
+    </script>
+</body>
+</html>
