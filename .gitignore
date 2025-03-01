@@ -24,10 +24,9 @@ dist-ssr
 *.sw?
 
 
+
 # Ignore environment variables
 .env
 .env.local
 .env.development
 .env.production
-
-testing/serviceAccountKey.json

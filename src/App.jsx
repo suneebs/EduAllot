@@ -1,36 +1,33 @@
-import React, { Suspense } from "react";
+import React, { Suspense, useState }  from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import SecureAuthRoutes from "./utils/SecureAuthRoutes"; // Auth Middleware
-import NotFound from "./pages/NotFound"; // 404 Page
-import LoadingSpinner from "./components/Shared/LoadingSpinner"; // Loader Component
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min';
+import NotFound from "./pages/NotFound"; 
+import LoadingSpinner from "./components/Shared/LoadingSpinner";
+import AdminLogin from './components/admin/AdminLogin';
+import SecureAuthRoutes from './utils/SecureAuthRoutes';
+import AdminDashboard from './components/admin/AdminDashboard';
 
-// Lazy load components for efficiency
+
+
 const Home = React.lazy(() => import("./pages/Home"));
-const AdminLogin = React.lazy(() => import("./components/admin/AdminLogin"));
-
-
-// Admin Pages
-const AdminDashboard = React.lazy(() => import("./components/admin/AdminDashboard"));
-
-
-// User Pages
-const User = React.lazy(() => import("./components/user/User"));
-
 
 function App() {
-
-
-    return (
-        <Router>
+  
+  return (
+    <Router>
             <Suspense fallback={<LoadingSpinner />}>
                 <Routes>
-                    {/* Redirect '/' to '/home' */}
-                    {/* <Route path="/" element={<Navigate to="/home" replace />} /> */}
+                    
                     <Route path="/" element={<Home />} />
+                    <Route path="/apply" element={<Home comp="apply" />} />
+
+
+
 
                     {/* Public Routes */}
-                    <Route path="/home" element={<User />} />
-                    <Route path="/adminlogin2025" element={<AdminLogin />} />
+                    
+                    <Route path="/admincet" element={<AdminLogin />} />
                     
 
                     {/* Protected Routes (Admin) */}
@@ -43,7 +40,7 @@ function App() {
                 </Routes>
             </Suspense>
         </Router>
-    );
+  )
 }
 
-export default App;
+export default App

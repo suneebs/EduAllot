@@ -23,8 +23,8 @@ const AdminLogin = () => {
 
   return (
     <div className="container d-flex justify-content-center align-items-center vh-100">
-  <div className="card p-4 shadow" style={{ maxWidth: "400px", width: "100%" }}>
-    <h2 className="text-center mb-4">Login</h2>
+  <div className="card p-4 shadow" style={{ maxWidth: "450px", width: "100%" }}>
+    <h2 className="text-center mb-4">Admin Login</h2>
     <form onSubmit={handleLogin}>
       <div className="mb-3">
         <input
