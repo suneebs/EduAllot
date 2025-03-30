@@ -1,72 +1,71 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../../utils/firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import LoadingSpinner from "../Shared/LoadingSpinner";
 
-const AllotmentResults = () => {
-  const [allotments, setAllotments] = useState([]);
-  const [loading, setLoading] = useState(false);
+const AllotmentResults = ({ onClose }) => {
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [results, setResults] = useState(null);
 
   useEffect(() => {
-    const fetchAllotments = async () => {
-      setLoading(true);
+    const fetchResults = async () => {
       try {
-        const snapshot = await getDocs(collection(db, "published_allotments"));
-        const allotmentData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        
-        // Sort allotments by latest first
-        allotmentData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        const allotmentRef = collection(db, "published_allotments");
+        const q = query(allotmentRef, orderBy("timestamp", "desc"));
+        const snapshot = await getDocs(q);
 
-        setAllotments(allotmentData);
-        setLoading(false);
+        if (!snapshot.empty) {
+          setResults(snapshot.docs[0].data());
+        } else {
+          setError("No published allotment found.");
+        }
       } catch (err) {
-        setError("Failed to fetch allotments: " + err.message);
-        console.error("Error fetching allotments:", err);
+        console.error("Error fetching published results:", err);
+        setError("Failed to fetch results.");
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchAllotments();
+    fetchResults();
   }, []);
 
   return (
-    <div className="max-w-6xl mx-auto p-6 container">
-      <h1 className="text-3xl font-bold mb-6">Previous Allotments</h1>
+    <div className="fixed inset-0 flex justify-center items-center p-4">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-3xl relative">
+        
+        <h2 className="text-2xl font-semibold mb-4">Allotment Results</h2>
 
-      {loading && <p>Loading allotments...</p>}
-      {error && <p className="text-red-500">{error}</p>}
-
-      {allotments.length === 0 && !loading ? (
-        <p>No previous allotments found.</p>
-      ) : (
-        allotments.map(allotment => (
-          <div key={allotment.id} className="border rounded-lg p-4 shadow mb-4">
-            <h2 className="text-xl font-bold mb-2">
-              Allotment Batch: {new Date(allotment.timestamp).toLocaleString()}
-            </h2>
-            <h3 className="font-bold mt-4">Departments</h3>
-            <ul>
-              {allotment.departments.map(dept => (
-                <li key={dept.id} className="mb-2">
-                  <strong>{dept.name}</strong> - Capacity: {dept.capacity}, Allocated: {dept.allocated_seats.length}
-                </li>
-              ))}
-            </ul>
-
-            <h3 className="font-bold mt-4">Allocated Students</h3>
-            <ul>
-              {allotment.students.map(student => (
-                <li key={student.id} className="mb-1">
-                  {student.name} - <strong>{student.allocated_department}</strong> ({student.seat_type})
-                </li>
-              ))}
-            </ul>
+        {loading ? (
+          <div className="flex justify-center items-center py-4">
+            <LoadingSpinner size="lg" />
           </div>
-        ))
-      )}
+        ) : error ? (
+          <p className="text-red-500">{error}</p>
+        ) : (
+          <div className="overflow-y-auto max-h-96">
+            <table className="table-auto w-full border-collapse border border-gray-400">
+              <thead>
+                <tr className="bg-gray-200">
+                  <th className="border px-4 py-2">Student Name</th>
+                  <th className="border px-4 py-2">Allocated Department</th>
+                  <th className="border px-4 py-2">Seat Type</th>
+                </tr>
+              </thead>
+              <tbody>
+                {results.students.map((student) => (
+                  <tr key={student.id}>
+                    <td className="border px-4 py-2">{student.name}</td>
+                    <td className="border px-4 py-2">{student.allocated_department || "Not Allocated"}</td>
+                    <td className="border px-4 py-2">{student.seat_type || "General"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { db } from "../../utils/firebase";
 import { collection, getDocs, addDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import AllotmentResults from "./AllotmentResults";
 
 const PublishAllotment = () => {
   const [departments, setDepartments] = useState([]);
@@ -9,8 +10,8 @@ const PublishAllotment = () => {
   const [allotmentDone, setAllotmentDone] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showResults, setShowResults] = useState(false); // Toggle Results
 
-  // Fetch departments and students
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -43,70 +44,81 @@ const PublishAllotment = () => {
     fetchData();
   }, []);
 
-  // Function to extract priority departments
   const getPriorityDepartments = (priorityChoices) => {
     if (!priorityChoices) return [];
-
     return Object.entries(priorityChoices)
       .sort((a, b) => parseInt(a[0]) - parseInt(b[0]))
       .map((entry) => entry[1]);
   };
 
-  // Run the allotment algorithm
-  const runAllotment = () => {
-    setLoading(true);
-    setError(null);
+  const allocateSeats = (students, departments, category, general = false) => {
+    students.forEach((student) => {
+      if (student.allocated_department) return;
+      const priorityDepts = getPriorityDepartments(student.priorityChoices);
 
-    try {
-      const deptsCopy = JSON.parse(JSON.stringify(departments));
-      const sortedStudents = [...students].sort((a, b) => b.distance - a.distance);
+      for (const deptName of priorityDepts) {
+        const dept = departments.find((d) => d.name.toLowerCase() === deptName.toLowerCase());
+        if (!dept) continue;
 
-      // Allocate Reserved Seats
-      sortedStudents.forEach((student) => {
-        if (student.allocated_department) return;
-        const priorityDepts = getPriorityDepartments(student.priorityChoices);
+        const allocatedSeats = dept.allocated_seats.filter((s) => s.seat_type === category).length;
+        const availableSeats = dept.reserved_seats?.[category] || 0;
+        const totalAllocated = dept.allocated_seats.length;
 
-        for (const deptName of priorityDepts) {
-          const dept = deptsCopy.find((d) => d.name.toLowerCase() === deptName.toLowerCase());
-          if (!dept) continue;
-
-          if (dept.reserved_seats?.[student.category] > 0) {
-            const allocatedSeats = dept.allocated_seats.filter((s) => s.seat_type === student.category).length;
-
-            if (allocatedSeats < dept.reserved_seats[student.category]) {
-              student.allocated_department = dept.name;
-              student.seat_type = student.category;
-              dept.allocated_seats.push({ student_id: student.formId, seat_type: student.category });
-              break;
-            }
-          }
-        }
-      });
-
-      // Allocate General Seats
-      sortedStudents.forEach((student) => {
-        if (student.allocated_department) return;
-        const priorityDepts = getPriorityDepartments(student.priorityChoices);
-
-        for (const deptName of priorityDepts) {
-          const dept = deptsCopy.find((d) => d.name.toLowerCase() === deptName.toLowerCase());
-          if (!dept) continue;
-
-          const totalAllocated = dept.allocated_seats.length;
-          const generalSeatsAllocated = dept.allocated_seats.filter((s) => s.seat_type === "general").length;
-          const generalSeatsCapacity =
+        if (general) {
+          const generalSeatsAvailable =
             dept.reserved_seats?.general ||
             dept.capacity - Object.values(dept.reserved_seats || {}).reduce((sum, val) => sum + val, 0);
 
-          if (generalSeatsAllocated < generalSeatsCapacity && totalAllocated < dept.capacity) {
+          if (totalAllocated < dept.capacity && allocatedSeats < generalSeatsAvailable) {
             student.allocated_department = dept.name;
             student.seat_type = "general";
             dept.allocated_seats.push({ student_id: student.formId, seat_type: "general" });
             break;
           }
+        } else {
+          if (allocatedSeats < availableSeats) {
+            student.allocated_department = dept.name;
+            student.seat_type = category;
+            dept.allocated_seats.push({ student_id: student.formId, seat_type: category });
+            break;
+          }
         }
-      });
+      }
+    });
+  };
 
+  const runAllotment = () => {
+    setLoading(true);
+    setError(null);
+  
+    try {
+      const deptsCopy = JSON.parse(JSON.stringify(departments));
+      
+      // **Filter out students whose distance is greater than 70 km**
+      const eligibleStudents = students.filter(student => student.distance <= 70);
+      
+      const sortedStudents = [...eligibleStudents].sort((a, b) => b.distance - a.distance);
+  
+      // **1. Physically Disabled (PD) - 5% Reserved**
+      allocateSeats(sortedStudents.filter(s => s.category === "PD"), deptsCopy, "PD");
+  
+      // **2. Transgender (1 seat reserved)**
+      allocateSeats(sortedStudents.filter(s => s.category === "Transgender"), deptsCopy, "Transgender");
+  
+      // **3. Special Reservations**
+      allocateSeats(sortedStudents.filter(s => s.category === "Sports"), deptsCopy, "Sports");
+      allocateSeats(sortedStudents.filter(s => s.category === "Technical Staff"), deptsCopy, "Technical Staff");
+      allocateSeats(sortedStudents.filter(s => s.category === "Central Govt"), deptsCopy, "Central Govt");
+  
+      // **4. Mandatory Reservations (SC, ST, SEBC, EWS)**
+      const reservationCategories = ["SC", "ST", "EZ", "M", "BH", "LC", "DV", "VK", "KN", "BX", "KU", "EWS"];
+      reservationCategories.forEach(category => {
+        allocateSeats(sortedStudents.filter(s => s.category === category), deptsCopy, category);
+      });
+  
+      // **5. General Merit Allocation**
+      allocateSeats(sortedStudents, deptsCopy, "general", true);
+  
       setDepartments(deptsCopy);
       setStudents(sortedStudents);
       setAllotmentDone(true);
@@ -117,8 +129,8 @@ const PublishAllotment = () => {
       setLoading(false);
     }
   };
+  
 
-  // Publish allotment to db
   const publishAllotment = async () => {
     if (!allotmentDone) return;
     var prmp = prompt("Please type 'confirm' to publish allotment");
@@ -163,21 +175,6 @@ const PublishAllotment = () => {
     }
   };
 
-  // Reset all allotments
-  const resetAllotments = () => {
-    if (prompt("Please type 'reset' to reset allotments") !== "reset") return;
-
-    setLoading(true);
-    setError(null);
-
-    setDepartments(departments.map((dept) => ({ ...dept, allocated_seats: [] })));
-    setStudents(students.map((student) => ({ ...student, allocated_department: null, seat_type: null })));
-    setAllotmentDone(false);
-    setLoading(false);
-
-    alert("All allotments have been reset!");
-  };
-
   return (
     <div className="max-w-6xl mx-auto p-6 container" style={{ maxHeight: "580px", overflowY: "auto" }}>
       <h1 className="text-3xl font-bold mb-6">Publish Allotment</h1>
@@ -193,11 +190,14 @@ const PublishAllotment = () => {
           <button onClick={publishAllotment} disabled={loading} className="btn btn-success me-2">
             {loading ? "Publishing..." : "Publish Allotment"}
           </button>
-          <button onClick={resetAllotments} disabled={loading} className="btn btn-danger">
-            Reset
+          <button onClick={() => setShowResults(!showResults)} className="btn btn-primary me-2">
+            {showResults ? "Hide Results" : "Show Allotment Results"}
           </button>
         </div>
       )}
+
+{showResults && <AllotmentResults onClose={() => setShowResults(false)} />}
+
     </div>
   );
 };
