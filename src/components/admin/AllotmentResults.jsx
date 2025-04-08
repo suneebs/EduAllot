@@ -7,6 +7,8 @@ const AllotmentResults = ({ onClose }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [results, setResults] = useState(null);
+  const [selectedDept, setSelectedDept] = useState(null);
+  const [allDepartments, setAllDepartments] = useState([]);
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -16,7 +18,10 @@ const AllotmentResults = ({ onClose }) => {
         const snapshot = await getDocs(q);
 
         if (!snapshot.empty) {
-          setResults(snapshot.docs[0].data());
+          const data = snapshot.docs[0].data();
+          setResults(data);
+          const uniqueDepartments = [...new Set(data.students.map(s => s.allocated_department))];
+          setAllDepartments(uniqueDepartments.filter(d => d));
         } else {
           setError("No published allotment found.");
         }
@@ -31,39 +36,102 @@ const AllotmentResults = ({ onClose }) => {
     fetchResults();
   }, []);
 
-  return (
-    <div className="fixed inset-0 flex justify-center items-center p-4">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-3xl relative">
-        
-        <h2 className="text-2xl font-semibold mb-4">Allotment Results</h2>
+  const filteredStudents = selectedDept
+    ? results?.students.filter(student => student.allocated_department === selectedDept)
+    : results?.students;
 
+  return (
+    <div className="fixed inset-0 flex justify-center items-center  bg-black bg-opacity-50 z-50">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl p-8 relative">
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 transition"
+        >
+          ✕
+        </button>
+
+        {/* Header */}
+        <h2 className="text-3xl font-semibold text-gray-800 mb-6 text-center">
+          Allotment Results
+        </h2>
+
+        {/* Loading / Error */}
         {loading ? (
-          <div className="flex justify-center items-center py-4">
+          <div className="flex justify-center items-center py-10">
             <LoadingSpinner size="lg" />
           </div>
         ) : error ? (
-          <p className="text-red-500">{error}</p>
+          <p className="text-center text-red-600 text-lg">{error}</p>
         ) : (
-          <div className="overflow-y-auto max-h-96">
-            <table className="table-auto w-full border-collapse border border-gray-400">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="border px-4 py-2">Student Name</th>
-                  <th className="border px-4 py-2">Allocated Department</th>
-                  <th className="border px-4 py-2">Seat Type</th>
-                </tr>
-              </thead>
-              <tbody>
-                {results.students.map((student) => (
-                  <tr key={student.id}>
-                    <td className="border px-4 py-2">{student.name}</td>
-                    <td className="border px-4 py-2">{student.allocated_department || "Not Allocated"}</td>
-                    <td className="border px-4 py-2">{student.seat_type || "General"}</td>
+          <>
+            {/* Department Filter Buttons */}
+            <div className="flex flex-wrap justify-center gap-3 mb-6">
+              <button
+                className={`px-4 py-2 rounded-full border transition-all duration-200 ${
+                  !selectedDept
+                    ? "bg-blue-600 text-white shadow"
+                    : "bg-gray-100 text-gray-700 hover:bg-blue-100"
+                }`}
+                onClick={() => setSelectedDept(null)}
+              >
+                All Departments
+              </button>
+              {allDepartments.map((dept) => (
+                <button
+                  key={dept}
+                  onClick={() => setSelectedDept(dept)}
+                  className={`px-4 py-2 rounded-full border transition-all duration-200 ${
+                    selectedDept === dept
+                      ? "bg-blue-600 text-white shadow"
+                      : "bg-gray-100 text-gray-700 hover:bg-blue-100"
+                  }`}
+                >
+                  {dept}
+                </button>
+              ))}
+            </div>
+
+            {/* Table */}
+            <div className="overflow-y-auto max-h-[420px] border rounded-lg">
+              <table className="w-full text-sm text-left border-collapse">
+                <thead className="bg-blue-50 text-gray-700 text-sm sticky top-0 z-10">
+                  <tr>
+                    <th className="px-5 py-3 border-b">Student Name</th>
+                    <th className="px-5 py-3 border-b">Allocated Department</th>
+                    <th className="px-5 py-3 border-b">Seat Type</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filteredStudents.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan="3"
+                        className="text-center py-6 text-gray-500 italic"
+                      >
+                        No students found for {selectedDept}.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredStudents.map((student) => (
+                      <tr
+                        key={student.id}
+                        className="even:bg-gray-50 hover:bg-blue-50 transition"
+                      >
+                        <td className="px-5 py-3 border-b">{student.name}</td>
+                        <td className="px-5 py-3 border-b">
+                          {student.allocated_department}
+                        </td>
+                        <td className="px-5 py-3 border-b">
+                          {student.seat_type || "General"}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>
